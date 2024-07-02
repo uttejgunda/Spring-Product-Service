@@ -1,5 +1,6 @@
 package com.example.day180springprodservicedemo.services;
 
+import com.example.day180springprodservicedemo.dto.FakeStoreRequestDto;
 import com.example.day180springprodservicedemo.models.Product;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +25,10 @@ public class RealProductService implements ProductService {
 
     @Override
     public Product createProduct(Product product) {
+        return null;
+    }
+
+    public Product createProduct(FakeStoreRequestDto product) {
         return null;
     }
 }

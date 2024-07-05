@@ -2,11 +2,14 @@ package com.example.day180springprodservicedemo.services;
 
 import com.example.day180springprodservicedemo.dto.FakeStoreRequestDto;
 import com.example.day180springprodservicedemo.models.Product;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@Qualifier("RealService")
 public class RealProductService implements ProductService {
     @Override
     public Product getSingleProduct(String productId) {
@@ -15,7 +18,7 @@ public class RealProductService implements ProductService {
 
     @Override
     public List<Product> getAllProducts() {
-        return null;
+        return new ArrayList<>();
     }
 
     @Override

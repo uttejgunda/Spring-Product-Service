@@ -1,5 +1,6 @@
 package com.example.day180springprodservicedemo.services;
 
+import com.example.day180springprodservicedemo.dto.ErrorResponseDto;
 import com.example.day180springprodservicedemo.dto.FakeStorePostResponseDto;
 import com.example.day180springprodservicedemo.dto.FakeStoreRequestDto;
 import com.example.day180springprodservicedemo.dto.FakeStoreResponseDto;
@@ -8,15 +9,20 @@ import com.example.day180springprodservicedemo.exceptions.ProductNotFoundExcepti
 import com.example.day180springprodservicedemo.models.Category;
 import com.example.day180springprodservicedemo.models.Product;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
-@Primary
+@Qualifier("FakeStoreService")
+//@Primary
 public class FakeStoreProductService implements ProductService {
 
     @Autowired
@@ -65,6 +71,7 @@ public class FakeStoreProductService implements ProductService {
         Product product = response.toProduct();
         return product;
     }
+
 
     private void connectToDB() throws DBNotFoundException {
         throw new DBNotFoundException("DB not found...");

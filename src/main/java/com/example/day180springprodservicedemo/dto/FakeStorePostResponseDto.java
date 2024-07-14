@@ -17,14 +17,14 @@ public class FakeStorePostResponseDto {
 
     public Product toProduct() {
         Product product = new Product();
-        product.setId(this.getId());
+        product.setId(Long.valueOf(this.getId()));
         product.setName(this.getTitle());
         product.setPrice(this.getPrice() * 1.0);
         product.setDescription(this.getDescription());
         product.setImageUrl(this.getImage());
         Category category = new Category();
         category.setName(this.getCategory());
-        product.setCategory(category);
+//        product.setCategory(category);
         // ...
         // ...
         return product;

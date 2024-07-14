@@ -198,3 +198,123 @@ Hence, to make this cubersome work of working with database for every endpoint, 
 ### FLOW OF THE ARCHITECTURE - 
 **App** -----> (`getProductById()`) gives method name to **JPA** -----> **ORM** which writes the Sql query for the method -----> **JDBC Interface**, with the help of its implementations connects to the Database of MySql or PostGreSql etc -----> **DATABASE**
 
+
+# Day 183
+
+> **REPOSITORY PATTERN -**
+- The code for interacting with the DB should always be separate from the Business logic. 
+- So code of interacting with database should not be in Service class. They should be an intermediatary class between Service & Database.
+- This intermediatary class where we write the SQL queries to execute on Database, is called a **Repository**.
+>> SERVICE ---> REPOSITORY CLASS ---> DATABASE
+- This way in future if we want to change the type of database, it would not affect with lot of changes in the service code. As if we do it, we will have to change all the SQL queries in the service class.
+- This creates **LOOSE COUPLING** between *Service* & *Database*. 
+
+### WHAT IS LOOSE COUPLING? 
+- It means, "Any change in one file should not affect other file".
+- Here, any change in Database should not affect Service. And any change in Service should not affect Database. 
+- Hence we use Repository class as an intermediatory to make Service & Database be independent from each other. 
+- Opposite to *LOOSE COUPLING** is **TIGHT COUPLING**
+
+### IMPLEMENTING REPOSITORY PATTERN/LAYER - 
+1. Create a `repository` package. And add a class `ProductRepository`. 
+2. Here we can write queries that do the CRUD with database/products. 
+3. Make this class have `@Repository` annotation. So that Spring will create a bean for it by auto and lets you use it in your Service. 
+4. In the `RealProductService` class, use `@Autowired` and create the object/instance of the `ProductRepository`.
+5. Now in the methods of `RealProductService`, use the `productRepository` and call the methods. For ex: inside `getAllProducts`, call `productRepository.getAllProducts()`. Inside `createProduct`, call `productRepository.save(product)`. 
+
+- Now in Product Repository class, we have to implement the methods by writing SQL queries. 
+  - For this, we will use a Spring framework that will help us talk with Databases.
+  - Go to Maven Central and add the dependency for **Spring Boot Starter Data JPA**. JPA is the interface where we write the queries, Hibernate is the inbuilt ORM which will create the SQL queries based on the method name of JPA interface. 
+  - Spring Boot Starter Data JPA Library comes with Hibernate (which is the ORM). But the library which connects & executes the query with Database is done by JDBC. Hibernate only creates the query. JDBC executes the query on Database. 
+  - In Maven Central, add the dependency for **MySql Connector J**
+
+  - Now we need to tell/config our Spring App on how to connect to Database. [Accessing Data MySql](https://spring.io/guides/gs/accessing-data-mysql)
+  - To configure the connection, go to `application.properties` file and paste the configs as in above link. 
+  - Now on the right side *Database* icon of *IntelliJ*, create a connection to the database by typing `root` user and with the mySql original `password`.
+  - In the `application.properties` file, we don't want to display the original mySql password. So in the database terminal of intelliJ, write the sql commands of creating a database, creating a user and granting all privileges to that user. 
+  - This way, in the `application.properties`, we can make use of the new created user for the database, and display the password given for that user. 
+
+> **MODELS -**
+- In our Spring project, models are those whose info/classes is going to be stored in the Database as Tables. 
+- Ex: Product, Category ---> we will take products table, category table which will have the columns as per the properties in the Product class. 
+- Product class should have the attributes of `id`, `name`, `disc`, `price`, `category`, `imageUrl`. We can also have `createdAt`, `udpatedAt` attribute. All these attributes should be converted into a table in our database. 
+- Now the `category` in a product is an object itself. Means category is a separate table in database. Hence, in the product, we should have the `id` of the category stored for the product. So `id` is the `FOREIGN KEY`.
+
+- So this way if `Product` class is converted into a TABLE, every object of the Product class will be like a ROW in the table. 
+
+### Better way to create models -
+- Ideally in every model we have attributes of `id`, then the attributes related to that model, and then `cretedAt`, `updatedAt`.
+- So we can make a parent class having all the common attributes. We can call it as **Base Model**. 
+- And we want the `Product` class to have the common attributes along with its own attributes. Similarly to the `Category` class. 
+- We can make use of inheritance here, so that all parent attributes will come.
+
+### Hard Delete -
+- This means we delete a particular row entirely from the table completely. You will not be able to recover it and if you want again, you have to create the row again.
+- In MySql, the data is stored in the form of a tree called `B+ Tree`. So for every small change, the tree rebalances which has the cost of time complexity.
+- So with hard delete, data cannot be recovered and also the table updates are very slow.
+
+### Soft Delete -
+- This means marking the row as deleted.
+- We can maintain a column in the table as `isDeleted`, so that for every row we can store `true` or `false` whether that row is in deleted state or not.
+- So we can easily recover the data again. For example, if we delete a category called `laptop`, you just make the `isDeleted` column have value as `false`.
+- Also, there won't be cost of TC, as we are not updating the Tree here since we are not changing the rows, there won't be tree rearrangement and hence updates are much faster.
+- We can write the SQL query as below:
+>> **select * from Products where isDeleted= false;**
+
+
+## IMPLEMENTATION OF MODELS IN SPRING -
+### How to convert the class into a model in Database - 
+- To do this, we can make use of `@Entity` annotation to the `Product` class or whatever model class. 
+- Spring will convert all the attributes as an Entity/Model/Table in the database.
+**Note:**
+- There should be a primary key for every table for the purpose of Indexing and to manage all the rows. 
+- So spring will give an error if we don't specify which attribute should be a primary key. 
+- We can tell that to Spring using `@Id`, which will make that attribute as primary key for the table.
+- And these annotations like `@Entity` & `@Id` will be coming from the `JPA` library, which has all the functionalities to create tables, write sql queries etc by giving a class to it.
+
+<u>**Note:**</u>
+- When we do inheritance of common attributes from the parent `BaseModel`, the base model class itself is not going to a table. This is just having the extra attributes to be inherited to required classes.
+- So we should not make the `BaseModel` class have the `@Entity` annotation. As this should not be a table. 
+- So we can add the annotation as `@MapSuperClass`. This means this class is like a super class and all the inherited classes are sub-classes. And the attributes of the super class are mapped to the sub classes.
+
+### Auto Incrementing ID:
+- We want the `id` attribute to have an auto-incrementing value, hence we will use the `long` variable. 
+- To make this auto incrementing, we can use the annotation `@GeneratedValue(Strategy=GenerationType.IDENTITY)`
+- There are different types of strategies to generate the value - 
+  - Identity means auto incrementing,
+  - Auto means automatically assign a value which is unique, but it can be anything. Means 2nd row can be No.2 and 3rd row can be No.100. So its a random number. 
+  - and more... you can go inside the `GenerationType` class and see.
+
+### TELLING SPRING THAT THE ATTRIBUTE IS A FOREIGN KEY OF ANOTHER TABLE ROW
+- For all the attributes, Spring is able to convert the attributes to cols in the `Product` table. But for the `category` attribute in the `Product` class, we were getting an error. 
+- This is because `primitive datatypes` like `Integer`, `String`, `Long`, `Boolean` etc can be directly converted into the column of the table. 
+- But, the datatype of `category` attribute is a separate model all together. Means, we need to define the relation between the `Category` & `Product` model **_(CARDINALITY)_** 
+- As per the below explanation, as the cardinality of Product & Category table is `ManyToOne`, we need to use the annotation `@ManyToOne` in the Product near the category attribute to tell JPA that when creating the tables, the `id` of category should be present in the `Products` table as a column **_(FOREIGN KEY)_**. 
+- After Running code, you can find the `id` of the `Category` table as a column in the `Products` table.  
+
+<u>**Note -**</u>
+- Never apply the cardinality in both the tables. 
+- For ex: If we add `@OneToMany` annotation in for the `Category` table also by maintaining an attribute like `private List<Product> products`, then when you run the code, as the cardinality is mentioned in both `Product` & `Category` class, a mapping table would be created automatically. 
+- This is because we can never have a list of values in a single category row. In Relational Databases we can never store multiple values in a row. 
+- So now Spring thinks, the relation mentioned in Products table `ManyToOne` and the relation mentioned in Category table `OneToMany` are two separate relations. 
+- Hence, Spring adds a mapping table but putting the category id with the product id as it is one to Many relation since we wanted to store the list of products for every category row. 
+- So if we still want to maintain the list of products in category table also,  we need to tell Spring that this relation is same vice versa relation as the relation mentioned in `Products` table. 
+- To tell spring that it is the same relation at both tables but just an inverse in Category table, we can tell spring as below - 
+  - Put the annotation in Category table for the `List<Product> products` as `@OneToMany(mappedBy="category")`
+  - This means we are telling that this One to Many relation in Category table is already handled by the category column in the Product table ----> List<Product> table (It can know without mentioning the table name also, because the Product Generic is already a Table which spring knows because of @Entity for Product class. Hence it understands that it is mapped by category in Product table)
+  - So this way if we mention the cardinality annotation in both the `Product` & `Category` table, there won't be problem.
+
+### Finding Cardinalities - 
+- 1 Product can have 1 category as per our scenario. 
+- 1 Category can have many products. 
+- So the Cardinality is "MANY TO ONE"
+
+(1)            (many) 
+PRODUCT        CATEGORY  === MANY TO ONE  
+(many)         (1)
+  - For "ONE TO ONE" relation          ----> We store the id of any side on the other side of model.
+  - For "MANY TO ONE" or "ONE TO MANY" ----> We store the id of one in many rows like a FOREIGN KEY. 
+  - For "MANY TO MANY" relation        ----> We store the data in a MAPPING TABLE
+
+
+
